@@ -1,0 +1,142 @@
+﻿@page "/tableemployee"
+
+@rendermode InteractiveServer
+@using SimpleCRUD.Services
+@using SimpleCRUD.ViewModels
+@using System.Threading
+
+@inject EmployeeService EmployeeService
+@inject IDialogService DialogService
+
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">   
+
+<PageTitle>TableEmployee</PageTitle>
+
+<h2>
+    Table Employee
+</h2>
+
+
+<MudDataGrid @ref="dataGrid" T="EmployeeViewModel" ServerData="ServerReload" Filterable="false">
+    <ToolBarContent>
+        <MudButton
+            class="me-2"
+            @onclick="CreateNewUser"
+            StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+            Variant="Variant.Filled"
+            Color="Color.Primary">
+            Create New Employee
+        </MudButton>
+
+        
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.EmployeeIdView" Title="Employee Id" />
+        <PropertyColumn Property="x => x.FullName" Title="Full Name"     />
+        <PropertyColumn Property="x => x.Department" Title="Department" />
+        <PropertyColumn Property="x => x.DateOfBirth" Title="Date Of Birth" Format="dd MMM yyyy" />
+        <PropertyColumn Property="x => x.Age" Title="Age" />
+        <PropertyColumn Property="x => x.PhoneNumber" Title="Phone Number" />
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="EmployeeViewModel" />
+    </PagerContent>
+</MudDataGrid>
+</MudContainer>
+
+@code {
+    MudDataGrid<EmployeeViewModel> dataGrid;
+    string searchString = null;
+
+    private async Task<GridData<EmployeeViewModel>> ServerReload(GridState<EmployeeViewModel> state)
+    {
+        IEnumerable<EmployeeViewModel> data = await EmployeeService.GetAllEmployees();
+        await Task.Delay(300);
+        data = data.Where(element =>
+        {
+            if(string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if(element.EmployeeIdView.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if(element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = data.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if(sortDefinition != null)
+        {
+            switch(sortDefinition.SortBy)
+            {
+                case nameof(EmployeeViewModel.EmployeeIdView):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.EmployeeIdView
+                    );
+                    break;
+                case nameof(EmployeeViewModel.FullName):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.FullName
+                    );
+                    break;
+                case nameof(EmployeeViewModel.Department):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.Department
+                    );
+                    break;
+                case nameof(EmployeeViewModel.DateOfBirth):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.DateOfBirth
+                    );
+                    break;
+                case nameof(EmployeeViewModel.Age):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.Age
+                    );
+                    break;
+                case nameof(EmployeeViewModel.PhoneNumber):
+                    data = data.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.PhoneNumber
+                    );
+                    break;
+            }
+        }
+
+
+        var pagedData = data.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<EmployeeViewModel>
+        {
+            TotalItems = totalItems,
+            Items = pagedData
+        };
+    }
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+    private async Task CreateNewUser()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large};
+
+        var dialog = await DialogService.ShowAsync<CreateorUpdateEmployee>("Add Employee", options);
+        var result = await dialog.Result;
+
+        if(result is not null && !result.Canceled)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+}

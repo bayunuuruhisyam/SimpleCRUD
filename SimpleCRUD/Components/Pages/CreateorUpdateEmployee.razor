@@ -1,0 +1,85 @@
+﻿@using MudBlazor
+@using SimpleCRUD.Services
+@using SimpleCRUD.ViewModels
+
+@inject ISnackbar Snackbar
+@inject EmployeeService EmployeeService
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+
+            <MudGrid Class="mb-5">
+                <MudItem xs="9">
+                    <MudTextField Variant="Variant.Outlined"
+                                  @bind-Value="model.FullName"
+                                  For="@(() => model.FullName)" />
+                </MudItem>
+
+                <MudItem xs="3">
+                    <MudTextField Variant="Variant.Outlined"
+                                  @bind-Value="model.Age"
+                                  For="@(() => model.Age)" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDatePicker Variant="Variant.Outlined"
+                           Label="Date Of Birth"
+                           @bind-Date="_date" />
+
+            <MudTextField Variant="Variant.Outlined"
+                          @bind-Value="model.Department"
+                          For="@(() => model.Department)" />
+
+            <MudTextField Variant="Variant.Outlined"
+                          @bind-Value="model.PhoneNumber"
+                          For="@(() => model.PhoneNumber)" />
+
+            <DialogActions>
+                <MudButton Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           Type="Submit">
+                    Submit
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="Cancel">
+                    Cancel
+                </MudButton>
+            </DialogActions>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private DateTime? _date = DateTime.Today;
+
+    private EmployeeViewModel model = new();
+
+    private async Task OnValidSubmit()
+    {
+        if (_date is not null)
+            model.DateOfBirth = _date.Value;
+
+        var result = await EmployeeService.CreateNewEmployee(model);
+
+        if (result)
+        {
+            Snackbar.Add("Employee saved successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add("Error saving employee.", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
