@@ -1,4 +1,5 @@
 ﻿@using MudBlazor
+@using SimpleCRUD.Enum
 @using SimpleCRUD.Services
 @using SimpleCRUD.ViewModels
 
@@ -10,37 +11,42 @@
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
 
-            <MudGrid Class="mb-5">
+            <MudGrid Class="mb-4">
                 <MudItem xs="9">
                     <MudTextField Variant="Variant.Outlined"
+                                  Label="FullName"
                                   @bind-Value="model.FullName"
                                   For="@(() => model.FullName)" />
                 </MudItem>
 
                 <MudItem xs="3">
                     <MudTextField Variant="Variant.Outlined"
+                                  Label="Age"
                                   @bind-Value="model.Age"
                                   For="@(() => model.Age)" />
                 </MudItem>
-            </MudGrid>
+            </MudGrid >
 
             <MudDatePicker Variant="Variant.Outlined"
                            Label="Date Of Birth"
                            @bind-Date="_date" />
 
-            <MudTextField Variant="Variant.Outlined"
+            <MudTextField  Variant="Variant.Outlined"
+                          Label="Department"
                           @bind-Value="model.Department"
                           For="@(() => model.Department)" />
 
             <MudTextField Variant="Variant.Outlined"
+                          Label="Phone Number"
                           @bind-Value="model.PhoneNumber"
                           For="@(() => model.PhoneNumber)" />
-
+            <MudItem Class="py-3">
             <DialogActions>
-                <MudButton Color="Color.Primary"
-                           Variant="Variant.Filled"
-                           Type="Submit">
-                    Submit
+                <MudButton ButtonType="ButtonType.Submit"
+                               class="me-2"
+                               Color="Color.Primary"
+                               Variant="Variant.Filled">
+                             Save
                 </MudButton>
 
                 <MudButton Variant="Variant.Outlined"
@@ -48,28 +54,64 @@
                     Cancel
                 </MudButton>
             </DialogActions>
+            </MudItem>
         </EditForm>
     </DialogContent>
 </MudDialog>
 
 @code {
+    [Parameter]
+    public UIActionEnum Action { get; set; } = UIActionEnum.Insert;
+
+    [Parameter]
+    public DateTime? _date { get; set; } = DateTime.Today;
+
+    [Parameter]
+    public EmployeeViewModel model { get; set; } = new EmployeeViewModel();
+
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance MudDialog { get; set; }
 
-    private DateTime? _date = DateTime.Today;
 
-    private EmployeeViewModel model = new();
-
-    private async Task OnValidSubmit()
+    private async Task OnValidSubmit(EditContext editContext)
     {
         if (_date is not null)
+        {
             model.DateOfBirth = _date.Value;
+        }
 
-        var result = await EmployeeService.CreateNewEmployee(model);
+        if (Action == UIActionEnum.Insert)
+        {
+            CreateEmployee();
+        }
+        else if (Action == UIActionEnum.Update)
+        {
+            UpdateEmployee();
+        }
+
+    }
+    private void CreateEmployee()
+    {
+        var result = EmployeeService.CeateNewEmployee(model);
 
         if (result)
         {
-            Snackbar.Add("Employee saved successfully!", Severity.Success);
+            Snackbar.Add("Employee Add successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add("Error saving employee.", Severity.Error);
+        }
+    }
+
+    private void UpdateEmployee()
+    {
+        var result = EmployeeService.UpdateEmployee(model);
+
+        if (result)
+        {
+            Snackbar.Add("Employee Update successfully!", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         else

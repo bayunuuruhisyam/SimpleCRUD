@@ -2,6 +2,7 @@
 
 <MudDialogProvider />
 <MudPopoverProvider />
+<MudSnackbarProvider />
 
 <MudLayout>
     <MudAppBar Elevation="1">
@@ -17,8 +18,10 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+
 @code {
-    bool _drawerOpen = true;
+    bool _drawerOpen = false;
 
     void DrawerToggle()
     {
