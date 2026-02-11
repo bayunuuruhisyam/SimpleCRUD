@@ -18,5 +18,8 @@ namespace SimpleCRUD.ViewModels
             [Required] public DateTime DateOfBirth { get; set; }
             [Required] public int Age { get; set; }
             [Required] public string PhoneNumber { get; set; }
-        }
+       public bool IsActive { get; set; } = true;
+
+
+    }
 }

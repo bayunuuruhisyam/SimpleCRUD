@@ -31,10 +31,14 @@
                            Label="Date Of Birth"
                            @bind-Date="_date" />
 
-            <MudTextField  Variant="Variant.Outlined"
-                          Label="Department"
-                          @bind-Value="model.Department"
-                          For="@(() => model.Department)" />
+            <MudAutocomplete T="string"
+                             Variant="Variant.Outlined"
+                             Label="Department"
+                             @bind-Value="model.Department"
+                             SearchFunc="SearchDepartment"
+                             Clearable="true"
+                             ResetValueOnEmptyText="true"
+                             For="@(() => model.Department)" />
 
             <MudTextField Variant="Variant.Outlined"
                           Label="Phone Number"
@@ -67,32 +71,25 @@
     public DateTime? _date { get; set; } = DateTime.Today;
 
     [Parameter]
-    public EmployeeViewModel model { get; set; } = new EmployeeViewModel();
+    public EmployeeViewModel model { get; set; } = new();
 
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
 
-
-    private async Task OnValidSubmit(EditContext editContext)
+    private async Task OnValidSubmit()
     {
         if (_date is not null)
-        {
             model.DateOfBirth = _date.Value;
-        }
 
         if (Action == UIActionEnum.Insert)
-        {
             CreateEmployee();
-        }
-        else if (Action == UIActionEnum.Update)
-        {
+        else
             UpdateEmployee();
-        }
-
     }
-    private void CreateEmployee()
+
+    private async Task CreateEmployee()
     {
-        var result = EmployeeService.CeateNewEmployee(model);
+        var result = await EmployeeService.CreateNewEmployee(model);
 
         if (result)
         {
@@ -105,9 +102,9 @@
         }
     }
 
-    private void UpdateEmployee()
+    private async Task UpdateEmployee()
     {
-        var result = EmployeeService.UpdateEmployee(model);
+        var result = await EmployeeService.UpdateEmployee(model);
 
         if (result)
         {
@@ -118,6 +115,20 @@
         {
             Snackbar.Add("Error saving employee.", Severity.Error);
         }
+    }
+
+    private async Task<IEnumerable<string>> SearchDepartment(
+    string value,
+    CancellationToken cancellationToken)
+    {
+        var employees = await EmployeeService.GetAllEmployees();
+      
+        return employees
+            .Select(x => x.Department)
+            .Where(d => !string.IsNullOrWhiteSpace(d))
+            .Distinct()
+            .Where(d => string.IsNullOrEmpty(value)
+                || d.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 
     private void Cancel()

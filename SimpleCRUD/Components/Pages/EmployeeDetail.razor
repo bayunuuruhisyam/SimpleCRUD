@@ -1,0 +1,33 @@
+﻿@page "/employee/{EmployeeId:int}"
+@using SimpleCRUD.Services
+@using SimpleCRUD.ViewModels
+@inject EmployeeService EmployeeService
+
+<h3>Employee Detail</h3>
+
+@if (employee == null)
+{
+    <MudText>Employee not found</MudText>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <MudText><b>ID:</b> @employee.EmployeeIdView</MudText>
+        <MudText><b>Name:</b> @employee.FullName</MudText>
+        <MudText><b>Department:</b> @employee.Department</MudText>
+        <MudText><b>Age:</b> @employee.Age</MudText>
+        <MudText><b>Phone:</b> @employee.PhoneNumber</MudText>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public int EmployeeId { get; set; }
+
+    private EmployeeViewModel? employee;
+
+    protected async Task OnParametersSet()
+    {
+        employee = await EmployeeService.FindEmployee(EmployeeId);
+    }
+}

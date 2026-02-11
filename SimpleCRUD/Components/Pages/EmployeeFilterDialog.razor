@@ -1,0 +1,68 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+
+            <MudText Typo="Typo.h6">Filter Employee</MudText>
+
+            <MudTextField T="string"
+                          Label="Search Name / ID"
+                          @bind-Value="Search" />
+
+            <MudSelect T="string"
+                       Label="Department"
+                       Clearable="true"
+                       @bind-Value="Department">
+                @foreach (var dept in Departments)
+                {
+                    <MudSelectItem Value="@dept">@dept</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudNumericField T="int?"
+                             Label="Min Age"
+                             @bind-Value="MinAge" />
+
+            <MudNumericField T="int?"
+                             Label="Max Age"
+                             @bind-Value="MaxAge" />
+
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Apply">
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public string? Search { get; set; }
+    [Parameter] public string? Department { get; set; }
+    [Parameter] public int? MinAge { get; set; }
+    [Parameter] public int? MaxAge { get; set; }
+
+    [Parameter] public IEnumerable<string> Departments { get; set; } = Enumerable.Empty<string>();
+
+    void Apply()
+    {
+        MudDialog.Close(DialogResult.Ok(new
+        {
+            Search,
+            Department,
+            MinAge,
+            MaxAge
+        }));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

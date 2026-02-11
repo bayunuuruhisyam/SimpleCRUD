@@ -7,16 +7,20 @@ namespace SimpleCRUD.Services
 {
     public class EmployeeService
     {
-        private readonly AppDBContext dBContext;
+        private readonly IDbContextFactory<AppDBContext> _factory;
 
-        public EmployeeService(AppDBContext dBContext)
+        public EmployeeService(IDbContextFactory<AppDBContext> factory)
         {
-            this.dBContext = dBContext;
+            _factory = factory;
         }
 
+        // ================= GET ALL =================
         public async Task<List<EmployeeViewModel>> GetAllEmployees()
         {
-            return await dBContext.Employees
+            await using var context = await _factory.CreateDbContextAsync();
+
+            return await context.Employees
+                .AsNoTracking()
                 .OrderBy(x => x.FullName)
                 .Select(x => new EmployeeViewModel
                 {
@@ -25,90 +29,94 @@ namespace SimpleCRUD.Services
                     Department = x.Department,
                     DateOfBirth = x.DateOfBirth,
                     Age = x.Age,
-                    PhoneNumber = x.PhoneNumber
-                }).ToListAsync();
-        }
-            
-        public bool CeateNewEmployee(EmployeeViewModel model)
-        {
-            try
-            {
-                Employee employee = new Employee
-                {
-                    FullName = model.FullName,
-                    Department = model.Department,
-                    DateOfBirth = model.DateOfBirth,
-                    Age = model.Age,
-                    PhoneNumber = model.PhoneNumber,
-
-                };
-
-                dBContext.Employees.Add(employee);
-
-                var result = dBContext.SaveChanges();
-
-                return result > 0;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+                    PhoneNumber = x.PhoneNumber,
+                    IsActive = x.IsActive
+                })
+                .ToListAsync();
         }
 
-        public EmployeeViewModel? FindEmployee(int employeeId)
+        // ================= FIND =================
+        public async Task<EmployeeViewModel?> FindEmployee(int employeeId)
         {
-            var employee = dBContext.Employees.Find(employeeId);
+            await using var context = await _factory.CreateDbContextAsync();
+
+            var employee = await context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.EmployeeId == employeeId);
+
             if (employee == null)
                 return null;
 
-            EmployeeViewModel result = new EmployeeViewModel
+            return new EmployeeViewModel
             {
                 EmployeeId = employee.EmployeeId,
                 FullName = employee.FullName,
                 Department = employee.Department,
                 DateOfBirth = employee.DateOfBirth,
                 Age = employee.Age,
-                PhoneNumber = employee.PhoneNumber
+                PhoneNumber = employee.PhoneNumber,
+                IsActive = employee.IsActive
             };
-            return result;
         }
 
-        public bool UpdateEmployee(EmployeeViewModel model)
+        // ================= TOGGLE STATUS =================
+        public async Task ToggleStatus(int id)
         {
-            try
-            {
-                var employee = dBContext.Employees.Find(model.EmployeeId);
-                if (employee == null)
-                    return false;
-                employee.FullName = model.FullName;
-                employee.Department = model.Department;
-                employee.DateOfBirth = model.DateOfBirth;
-                employee.Age = model.Age;
-                employee.PhoneNumber = model.PhoneNumber;
-                var result = dBContext.SaveChanges();
-                return result > 0;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            await using var context = await _factory.CreateDbContextAsync();
+
+            var employee = await context.Employees.FindAsync(id);
+            if (employee == null) return;
+
+            employee.IsActive = !employee.IsActive;
+            await context.SaveChangesAsync();
         }
 
-        public bool DeleteEmployee(int employeeId)
+        // ================= CREATE =================
+        public async Task<bool> CreateNewEmployee(EmployeeViewModel model)
         {
-            try
+            await using var context = await _factory.CreateDbContextAsync();
+
+            var employee = new Employee
             {
-                var employee = dBContext.Employees.Find(employeeId);
-                if (employee == null)
-                    return false;
-                dBContext.Employees.Remove(employee);
-                var result = dBContext.SaveChanges();
-                return result > 0;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+                FullName = model.FullName,
+                Department = model.Department,
+                DateOfBirth = model.DateOfBirth,
+                Age = model.Age,
+                PhoneNumber = model.PhoneNumber,
+                IsActive = true
+            };
+
+            context.Employees.Add(employee);
+            return await context.SaveChangesAsync() > 0;
         }
-    };
+
+        // ================= UPDATE =================
+        public async Task<bool> UpdateEmployee(EmployeeViewModel model)
+        {
+            await using var context = await _factory.CreateDbContextAsync();
+
+            var employee = await context.Employees.FindAsync(model.EmployeeId);
+            if (employee == null) return false;
+
+            employee.FullName = model.FullName;
+            employee.Department = model.Department;
+            employee.DateOfBirth = model.DateOfBirth;
+            employee.Age = model.Age;
+            employee.PhoneNumber = model.PhoneNumber;
+
+            return await context.SaveChangesAsync() > 0;
+        }
+
+        // ================= DELETE =================
+        public async Task<bool> DeleteEmployee(int employeeId)
+        {
+            await using var context = await _factory.CreateDbContextAsync();
+
+            var employee = await context.Employees.FindAsync(employeeId);
+            if (employee == null) return false;
+
+            context.Employees.Remove(employee);
+            return await context.SaveChangesAsync() > 0;
+        }
+    }
 }
