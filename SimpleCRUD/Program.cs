@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using SimpleCRUD.Components;
-using SimpleCRUD.DataAccess;
+using SimpleCRUD.Presentation.Components;
 using MudBlazor.Services;
-using SimpleCRUD.Services;
+using SimpleCRUD.Features.Employees.Services;
+using SimpleCRUD.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
