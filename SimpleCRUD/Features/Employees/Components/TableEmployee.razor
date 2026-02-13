@@ -34,7 +34,7 @@
                  Bordered="true"
                  Class="border-black">
 
-        <!-- TOOLBAR -->
+        @* Toolbar *@
         <ToolBarContent>
             <MudButton StartIcon="@Icons.Material.Filled.PersonAddAlt1"
                        Color="Color.Primary"
@@ -54,7 +54,7 @@
         </ToolBarContent>
 
 
-        <!-- COLUMNS -->
+        @* Coloumn *@
         <Columns>
             <PropertyColumn Property="x => x.EmployeeIdView"
                             Title="Employee ID" />
@@ -165,7 +165,7 @@
     private int? minAge;
     private int? maxAge;
 
-    // contoh static department
+    // department
     private IEnumerable<string> Departments = Enumerable.Empty<string>();
 
     protected override async Task OnInitializedAsync()
